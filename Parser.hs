@@ -87,13 +87,13 @@ boolToken :: Parser Expression
 boolToken = lexeme $ ExprBool . read <$> (keyword "True" Prim.<|> keyword "False") 
 
 keyword :: String -> Parser String
-keyword k = try $ k <$ do { string k ; notFollowedBy $ alphaNum Prim.<|> char '_'}
+keyword k = try $ k <$ do { string k ; notFollowedBy $ digit Prim.<|> letter Prim.<|> char '_'}
 
 operator :: String -> Parser String
 operator s = try $ lexeme $ s <$ do {string s ; notFollowedBy ( oneOf "+-*^/<>=|&")}
 
 parens :: Parser Expression 
-parens = Parens <$> (symbol '(' *> parseExpression <* symbol ')')
+parens = try $ Parens <$> (symbol '(' *> parseExpression <* symbol ')')
 
 ifThenElse :: Parser Expression
 ifThenElse = do void $ lexeme $ keyword "if"
@@ -104,9 +104,9 @@ ifThenElse = do void $ lexeme $ keyword "if"
                 IfThenElse expr1 expr2 <$> parseExpression
 
 callExpr :: Parser Expression
-callExpr = do   s <- identifierToken <* symbol '('
-                xs <- parseExpression `sepBy` symbol ','
-                Call s xs  <$ symbol ')'
+callExpr = try $ do     s <- identifierToken <* symbol '('
+                        xs <- parseExpression `sepBy` symbol ','
+                        Call s xs  <$ symbol ')'
 
 defParser :: Parser FunctionDef
 defParser = lexeme $ do s <- identifierToken <* symbol '('
@@ -121,18 +121,13 @@ defResultParser = lexeme $ do   void $ whitespace *> lexeme (keyword "result") <
 
 
 term :: Parser Expression
-term = choice [ifThenElse, numberToken, boolToken, ExprIdentifier <$> identifierToken, stringToken, parens, callExpr]
+term = choice [ifThenElse, numberToken, boolToken, stringToken, parens, callExpr, ExprIdentifier <$> identifierToken]
 
 
 operatorTable :: E.OperatorTable String () Identity Expression
-operatorTable = [   [
-                    prefixK "not" $ UnaryOp Not, 
+operatorTable = [   [ 
                     prefix  "+"   $ UnaryOp UnaryPlus, 
                     prefix  "-"   $ UnaryOp UnaryNegation
-                    ],
-                    [
-                    binary "||" (BooleanOP Or ) E.AssocLeft,
-                    binary "&&" (BooleanOP And) E.AssocLeft
                     ],
                     [
                     binary "^" (BinaryOp Exp) E.AssocRight
@@ -151,6 +146,13 @@ operatorTable = [   [
                     binary "<" (CompOp OpLT) E.AssocNone, 
                     binary ">" (CompOp OpGT) E.AssocNone, 
                     binary "==" (CompOp OpEQ) E.AssocNone
+                    ],
+                    [
+                    prefixK "not" $ UnaryOp Not
+                    ],
+                    [
+                    binary "||" (BooleanOP Or ) E.AssocLeft,
+                    binary "&&" (BooleanOP And) E.AssocLeft
                     ]
                 ]
         where   prefix  s f = E.Prefix (f <$ operator s)
@@ -165,7 +167,7 @@ parseExpression :: Parser Expression
 parseExpression = E.buildExpressionParser operatorTable term
 
 mkParser :: (Show a) => Parser a -> String -> IO ()
-mkParser p = pPrint . parse (whitespace *> p) ""
+mkParser p = pPrint . parse (whitespace *> p <* eof) ""
 
 exprParser :: String -> IO ()
 exprParser = mkParser parseExpression
