@@ -8,9 +8,7 @@ import Data.Char
 import Text.Parsec.String (Parser)
 import Control.Monad.Identity
 import qualified Text.Parsec.Prim as Prim
-import Text.Pretty.Simple 
-import GHC.Types.SourceText (StringLiteral(StringLiteral))
-import GHC (parseExpr)
+import Text.Pretty.Simple
 
 type Identifier = String --a identifier (a non-empty string made of integers, letters and underscores but its first char is not a digit)
 type NumberLiteral = String -- The string representation of a numerical value (saved as a string for polymorphism)
@@ -118,8 +116,7 @@ defParser = lexeme $ do s <- identifierToken <* symbol '('
                         FunctionInfo s xs expr <$ (eof Prim.<|> symbol ';')
 
 defResultParser :: Parser ResultExpression
-defResultParser = lexeme $ do   void $ lexeme (keyword "result") <* symbol '='
-                                void $ symbol ')' <* symbol '='
+defResultParser = lexeme $ do   void $ whitespace *> lexeme (keyword "result") <* symbol '='
                                 parseExpression <* (eof Prim.<|> symbol ';')
 
 
@@ -168,7 +165,7 @@ parseExpression :: Parser Expression
 parseExpression = E.buildExpressionParser operatorTable term
 
 mkParser :: (Show a) => Parser a -> String -> IO ()
-mkParser p = pPrint . parse p ""
+mkParser p = pPrint . parse (whitespace *> p) ""
 
 exprParser :: String -> IO ()
 exprParser = mkParser parseExpression
