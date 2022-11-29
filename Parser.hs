@@ -1,4 +1,14 @@
-module Parser where
+module Parser 
+(
+programParser,
+exprParser,
+programPrettyParser,
+exprPrettyParser,
+parseFile,
+parsePrettyFile
+)
+
+where
 
 import Control.Applicative
 import Control.Monad
@@ -104,9 +114,9 @@ ifThenElse = do void $ lexeme $ keyword "if"
                 IfThenElse expr1 expr2 <$> parseExpression
 
 callExpr :: Parser Expression
-callExpr = try $ do     s <- identifierToken <* symbol '('
-                        xs <- parseExpression `sepBy` symbol ','
-                        Call s xs  <$ symbol ')'
+callExpr = do   s <- try $ identifierToken <* symbol '('
+                xs <- parseExpression `sepBy` symbol ','
+                Call s xs  <$ symbol ')'
 
 defParser :: Parser FunctionDef
 defParser = lexeme $ do s <- identifierToken <* symbol '('
@@ -166,14 +176,30 @@ operatorTable = [   [
 parseExpression :: Parser Expression
 parseExpression = E.buildExpressionParser operatorTable term
 
-mkParser :: (Show a) => Parser a -> String -> IO ()
-mkParser p = pPrint . parse (whitespace *> p <* eof) ""
+mkpParser :: (Show a) => Parser a -> String -> IO ()
+mkpParser p = pPrint . mkParser p
 
-exprParser :: String -> IO ()
+mkParser :: Parser a -> String -> Either ParseError a
+mkParser p = parse (whitespace *> p <* eof) ""
+
+exprPrettyParser :: String -> IO ()
+exprPrettyParser = mkpParser parseExpression
+
+exprParser :: String -> Either ParseError Expression
 exprParser = mkParser parseExpression
 
 parseProgram :: Parser Program
 parseProgram = Program <$> defResultParser <*> Prim.many defParser
 
-programParser :: String -> IO ()
+programPrettyParser :: String -> IO ()
+programPrettyParser = mkpParser parseProgram
+
+programParser :: String -> Either ParseError Program
 programParser = mkParser parseProgram
+
+
+parseFile :: FilePath -> IO (Either ParseError Program)
+parseFile = fmap programParser . readFile 
+
+parsePrettyFile :: FilePath -> IO ()
+parsePrettyFile path = readFile path >>= programPrettyParser 
