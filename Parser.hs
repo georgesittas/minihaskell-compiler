@@ -1,3 +1,14 @@
+------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------
+--- This module implements a parser for a subset of the haskell language and transforms the input program in the form --
+--- a string and transforms it into a structure of the form of the Program data type defined in Types.hs              --
+------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------
+
+-- The implementation of the parser uses the Parsec package. For more details on Parsec and its modules, there exist useful guides on how to use it as well
+-- as its documentation in hackage
+
+
 module Parser 
 (
 parseExpression,
@@ -12,7 +23,7 @@ programPrettyParser
 
 where
 
-import Types
+import Types 
 import Control.Monad
 import Text.Parsec 
 import qualified Text.Parsec.Expr as E
@@ -23,22 +34,10 @@ import qualified Text.Parsec.Prim as Prim
 import Text.Pretty.Simple ( pPrint )
 
 
+
 -----------------------------------------------------------------------------------------------
 --------------------- Assisting functions used for tokens and terms ---------------------------
 -----------------------------------------------------------------------------------------------
-
--- Given a list of forbidden words (keywords), the parser detects when an identifier is actually a keyword or not
--- If it a keyword, it fails without consuming input otherwise parse successfully and create the identifier
-blackListIdentifier :: [String] -> Parser String
-blackListIdentifier blackList = try $ do {s <- identifier ; guard (s `notElem` blackList) ; return s}
-
-identifierToken :: Parser String
-identifierToken = blackListIdentifier keywords
-
---TODO: Do I add the function name "result"?
--- A list of keywords which will not be considered as identifiers
-keywords :: [String]
-keywords = ["not", "if", "then", "else", "True", "False"];
 
 -- A Parser whose job is to consume as many whitespace characters as it can, till it reaches a non-whitespace character.
 -- It will succeed even if there is no whitespace to consume, however, since whatever the parser returns as output is irrelevant, the type () is used for a dummy value
@@ -48,13 +47,8 @@ whitespace = void $ many $ oneOf " \t\r\n"
 -- lexeme runs the parser p, and after it finishes, if it succeeds, it runs the whitespace parser but keeps the output of the parser p and ignore the output of the whitespace parser
 -- In other words, lexeme is used for making a parser p to consume all whitespace after it ends.
 lexeme :: Parser a -> Parser a
-lexeme p = p <* whitespace
+lexeme p = p <* whitespace-- Given a list of forbidden words (keywords), the parser detects when an identifier is actually a keyword or not
 
--- A parser whose job is to parse and return an identifier. 
-identifier :: Parser Identifier
-identifier = lexeme $ (:) <$> firstLetter <*> many restLetters
-    where   firstLetter = letter <|> char '_'
-            restLetters = digit  <|> firstLetter
 
 -- symbol ch parses the character ch, then consumes all whitespace and then ignores the otput by returning the dummy value ()
 symbol :: Char -> Parser ()
@@ -69,12 +63,36 @@ keyword k = try $ k <$ do { string k ; notFollowedBy $ digit <|> letter <|> char
 -- Similar to keyword, but instead only parses operator characters instead of an identifier.
 operator :: String -> Parser String
 operator s = try $ lexeme $ s <$ do {string s ; notFollowedBy ( oneOf "+-*^/<>=|&")}
--- A parser whose job is to parse a number literal and cast it into an Int
+
+
+-- A parser whose job is to parse and return an identifier (a string of digits, letters and underscores such that the first char is not a digit). 
+identifier :: Parser Identifier
+identifier = lexeme $ (:) <$> firstLetter <*> many restLetters
+    where   firstLetter = letter <|> char '_'
+            restLetters = digit  <|> firstLetter
+
+-- Check if the identifier string is actually a keyword, it fails without consuming input otherwise parse successfully and create the identifier
+blackListIdentifier :: [String] -> Parser String
+blackListIdentifier blackList = try $ do {s <- identifier ; guard (s `notElem` blackList) ; return s} -- identifier >>= (<$) A.<*>  (guard . (`notElem` blackList))
+
+
+
 
 -------------------------------------------------------------------------------------------------
 ----------------------- Construct the term parser of an expression ------------------------------
 -------------------------------------------------------------------------------------------------
 
+
+--TODO: Do I add the function name "result"?
+-- A list of keywords which will not be considered as identifiers
+keywords :: [String]
+keywords = ["not", "if", "then", "else", "True", "False"];
+
+--Given the list of all keywords for the programming language, create the complete identifier parser (it also consumes whitespace)
+identifierToken :: Parser String
+identifierToken = blackListIdentifier keywords
+
+-- A parser whose job is to parse a number literal and cast it into an Int
 numberToken :: Parser Expression
 numberToken = lexeme $ ExprNum . read <$> many1 digit
 
@@ -102,24 +120,35 @@ ifThenElse = do void $ lexeme $ keyword "if"
                 void $ lexeme $ keyword "else"
                 IfThenElse expr1 expr2 <$> parseExpression
 
--- A parser for a call expression
-callExpr :: Parser Expression
-callExpr = do   s <- try $ identifierToken <* symbol '('
+-- A parser for a call expression. The name of the function in the call is given as an input instead of being parsed and obtained
+callExpr :: String -> Parser Expression
+callExpr s = do symbol '('
                 xs <- parseExpression `sepBy` symbol ','
                 Call s xs  <$ symbol ')'
 
+-- This parser calls the call parser and if it fails, then it calls the identifierToken parser.
+-- However, those 2 parsers both work by first calling the identifierToken parser and then use the result in some way. Thus, 
+-- to avoid unnecessary backtracking, term0 factors the identifierToken parser outside of both parsers (corresponds to left factoring in context-free grammars) 
+term0 :: Parser Expression
+term0 = do  s <- identifierToken
+            callExpr s <|> return  (ExprIdentifier s)
+
+
 --the terms of an expression  made of terms combined with boolean, arithmetic and comparison operators
 term :: Parser Expression
-term = choice [ifThenElse, numberToken, boolToken, parens, callExpr, ExprIdentifier <$> identifierToken {- ,stringToken -}]
+term = choice [ifThenElse, numberToken, boolToken, parens, term0 {- ,stringToken -}]
 
 -------------------------------------------------------------------------------------------------
 ------------------  Adding the operators to the expression parser -------------------------------
 -------------------------------------------------------------------------------------------------
 
--- module Text.parsec.Expr imported as E is a module which supports the construction of a parser, by giving a parser for terms,
--- and an operator_table which is a list which contains lists of all unary and binary operators which will be used.
+-- module Text.parsec.Expr imported as E is a module which supports the construction of a parser which handles operators, by giving a parser for terms,
+-- and an operator_table which is a list of lists of parsers which recognise operators and return a function corresponding to the operator
 -- Also it is possible to specify the precedence of the operators, the associativity of binary operators, and whether
 -- a unary operator is a prefix or suffix operator.
+
+-- As for an example, binary "*" (BinaryOp Mult) E.AssocLeft constructs a parser which consumes the character '*', and returns `BinaryOp Mult` 
+-- whhich is a function which takes 2 expressions and returns an expression 
 
 operatorTable :: E.OperatorTable String () Identity Expression
 operatorTable = [   [ 
