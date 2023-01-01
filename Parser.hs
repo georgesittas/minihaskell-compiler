@@ -3,14 +3,14 @@
 -----------------------------------------------------------------------------------------------------------------------
 
 module Parser (
-	parseExpression,
-	parseProgram,
-	programParser,
-	exprParser,
-	parseFile,
-	exprPrettyParser,
-	parsePrettyFile,
-	programPrettyParser
+    parseExpression,
+    parseProgram,
+    programParser,
+    exprParser,
+    parseFile,
+    exprPrettyParser,
+    parsePrettyFile,
+    programPrettyParser
 ) where
 
 import Types 
@@ -117,37 +117,40 @@ term = choice [ifThenElse, numberToken, boolToken, parens, term0]
 
 -- The following implements a table-driven parsing for operators.
 operatorTable :: E.OperatorTable String () Identity Expression
-operatorTable = [
-	[
-		prefix  "+"   $ UnaryOp UnaryPlus,
-		prefix  "-"   $ UnaryOp UnaryNegation
-	],
-	[
-		binary "*" (BinaryOp Mult) E.AssocLeft,
-		binary "/" (BinaryOp Div) E.AssocLeft
-    ],
+operatorTable =
     [
-		binary "+" (BinaryOp Plus) E.AssocLeft,
-		binary "-" (BinaryOp Minus) E.AssocLeft
-    ],
-    [
-		binary "<="  (CompOp OpLTEQ) E.AssocNone,
-		binary ">=" (CompOp OpGTEQ) E.AssocNone,
-		binary "<" (CompOp OpLT) E.AssocNone,
-		binary ">" (CompOp OpGT) E.AssocNone,
-		binary "==" (CompOp OpEQ) E.AssocNone
-	],
-	[
-		prefixK "not" $ UnaryOp Not
-	],
-	[
-		binary "||" (BooleanOP Or ) E.AssocLeft,
-		binary "&&" (BooleanOP And) E.AssocLeft
+        [
+            prefix  "+"   $ UnaryOp UnaryPlus,
+            prefix  "-"   $ UnaryOp UnaryNegation
+        ],
+        [
+            binary "*" (BinaryOp Mult) E.AssocLeft,
+            binary "/" (BinaryOp Div) E.AssocLeft
+        ],
+        [
+            binary "+" (BinaryOp Plus) E.AssocLeft,
+            binary "-" (BinaryOp Minus) E.AssocLeft
+        ],
+        [
+            binary "<="  (CompOp OpLTEQ) E.AssocNone,
+            binary ">=" (CompOp OpGTEQ) E.AssocNone,
+            binary "<" (CompOp OpLT) E.AssocNone,
+            binary ">" (CompOp OpGT) E.AssocNone,
+            binary "==" (CompOp OpEQ) E.AssocNone
+        ],
+        [
+            prefixK "not" $ UnaryOp Not
+        ],
+        [
+            binary "||" (BooleanOP Or ) E.AssocLeft,
+            binary "&&" (BooleanOP And) E.AssocLeft
+        ]
     ]
-] where prefix  s f = E.Prefix (f <$ operator s)
-		prefixK k f = E.Prefix (f <$ keyword  k)
-		binary  s f = E.Infix  (f <$ operator s)
-		binaryK k f = E.Infix  (f <$ keyword  k)
+    where
+        prefix  s f = E.Prefix (f <$ operator s)
+        prefixK k f = E.Prefix (f <$ keyword  k)
+        binary  s f = E.Infix  (f <$ operator s)
+        binaryK k f = E.Infix  (f <$ keyword  k)
 
 -- Builds an expression parser given the operator precedence table and the term parser.
 parseExpression :: Parser Expression
