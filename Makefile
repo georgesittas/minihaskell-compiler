@@ -3,4 +3,4 @@ test-parser:
 	./TestParser
 
 clean:
-	rm *.hi *.o TestParser
+	rm -f *.hi *.o TestParser

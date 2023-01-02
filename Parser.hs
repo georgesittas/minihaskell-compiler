@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------------------------------------------------------
---- This module implements a parser for a subset of the haskell language represented by the Program type (Types.hs) ---
+--- This module implements a parser for a subset of the haskell language represented by the FProgram type (Types.hs) ---
 -----------------------------------------------------------------------------------------------------------------------
 
 module Parser (
@@ -50,7 +50,7 @@ operator :: String -> Parser String
 operator s = try $ lexeme $ s <$ do {string s ; notFollowedBy (oneOf "+-*^/<>=|&")}
 
 -- Parses an identifier: [a-zA-Z_][a-zA-Z0-9_]
-identifier :: Parser Identifier
+identifier :: Parser String
 identifier = lexeme $ (:) <$> firstLetter <*> many restLetters
     where   firstLetter = letter <|> char '_'
             restLetters = digit  <|> firstLetter
@@ -73,41 +73,41 @@ identifierToken :: Parser String
 identifierToken = blackListIdentifier keywords
 
 -- Parses number literals.
-numberToken :: Parser Expression
-numberToken = lexeme $ ExprNum . read <$> many1 digit
+numberToken :: Parser FExpr
+numberToken = lexeme $ FNum . read <$> many1 digit
 
 -- Parses the keywords "True" and "False".
-boolToken :: Parser Expression
-boolToken = lexeme $ ExprBool . read <$> (keyword "True" <|> keyword "False") 
+boolToken :: Parser FExpr
+boolToken = lexeme $ FBool . read <$> (keyword "True" <|> keyword "False") 
 
 -- Parses an expression wrapped in parentheses recursively.
-parens :: Parser Expression 
-parens = try $ ExprParens <$> (symbol '(' *> parseExpression <* symbol ')')
+parens :: Parser FExpr 
+parens = try $ FParens <$> (symbol '(' *> parseExpression <* symbol ')')
 
 -- Parses an if-then-else expression.
-ifThenElse :: Parser Expression
+ifThenElse :: Parser FExpr
 ifThenElse = do void $ lexeme $ keyword "if"
                 expr1 <- parseExpression
                 void $ lexeme $ keyword "then"
                 expr2 <- parseExpression
                 void $ lexeme $ keyword "else"
-                IfThenElse expr1 expr2 <$> parseExpression
+                FIfThenElse expr1 expr2 <$> parseExpression
 
 -- Parses a call expression given the function's identifier.
-callExpr :: String -> Parser Expression
+callExpr :: String -> Parser FExpr
 callExpr s = do symbol '('
                 xs <- parseExpression `sepBy` symbol ','
-                Call s xs  <$ symbol ')'
+                FCall s xs  <$ symbol ')'
 
 -- This parser invokes the call parser and if it fails, then it invokes the identifierToken parser.
 -- However, both of these parsers work by first invoking the identifierToken parser. Thus, to avoid
 -- unnecessary backtracking, term0 factors the identifierToken parser invocation (left-factoring).
-term0 :: Parser Expression
+term0 :: Parser FExpr
 term0 = do s <- identifierToken
-           callExpr s <|> return (ExprIdentifier s)
+           callExpr s <|> return (FVar s)
 
 -- Parses an expression term.
-term :: Parser Expression
+term :: Parser FExpr
 term = choice [ifThenElse, numberToken, boolToken, parens, term0]
 
 
@@ -116,34 +116,34 @@ term = choice [ifThenElse, numberToken, boolToken, parens, term0]
 ------------------------------------------------------------------------------------
 
 -- The following implements a table-driven parsing for operators.
-operatorTable :: E.OperatorTable String () Identity Expression
+operatorTable :: E.OperatorTable String () Identity FExpr
 operatorTable =
     [
         [
-            prefix  "+"   $ UnaryOp UnaryPlus,
-            prefix  "-"   $ UnaryOp UnaryNegation
+            prefix  "+"   $ FUnaryOp Positive,
+            prefix  "-"   $ FUnaryOp Negative
         ],
         [
-            binary "*" (BinaryOp Mult) E.AssocLeft,
-            binary "/" (BinaryOp Div) E.AssocLeft
+            binary "*" (FBinaryOp Mult) E.AssocLeft,
+            binary "/" (FBinaryOp Div) E.AssocLeft
         ],
         [
-            binary "+" (BinaryOp Plus) E.AssocLeft,
-            binary "-" (BinaryOp Minus) E.AssocLeft
+            binary "+" (FBinaryOp Plus) E.AssocLeft,
+            binary "-" (FBinaryOp Minus) E.AssocLeft
         ],
         [
-            binary "<="  (CompOp OpLTEQ) E.AssocNone,
-            binary ">=" (CompOp OpGTEQ) E.AssocNone,
-            binary "<" (CompOp OpLT) E.AssocNone,
-            binary ">" (CompOp OpGT) E.AssocNone,
-            binary "==" (CompOp OpEQ) E.AssocNone
+            binary "<="  (FCompOp LtEq) E.AssocNone,
+            binary ">=" (FCompOp GtEq) E.AssocNone,
+            binary "<" (FCompOp Lt) E.AssocNone,
+            binary ">" (FCompOp Gt) E.AssocNone,
+            binary "==" (FCompOp Eq) E.AssocNone
         ],
         [
-            prefixK "not" $ UnaryOp Not
+            prefixK "not" $ FUnaryOp Not
         ],
         [
-            binary "||" (BooleanOP Or ) E.AssocLeft,
-            binary "&&" (BooleanOP And) E.AssocLeft
+            binary "||" (FBooleanOp Or ) E.AssocLeft,
+            binary "&&" (FBooleanOp And) E.AssocLeft
         ]
     ]
     where
@@ -153,7 +153,7 @@ operatorTable =
         binaryK k f = E.Infix  (f <$ keyword  k)
 
 -- Builds an expression parser given the operator precedence table and the term parser.
-parseExpression :: Parser Expression
+parseExpression :: Parser FExpr
 parseExpression = E.buildExpressionParser operatorTable term
 
 
@@ -161,19 +161,19 @@ parseExpression = E.buildExpressionParser operatorTable term
 ------------------------- The construction of the programParser -------------------------
 -----------------------------------------------------------------------------------------
 
-defParser :: Parser FunctionDef
+defParser :: Parser FDefinition
 defParser = lexeme $ do s <- identifierToken <* symbol '('
                         xs <- identifierToken `sepBy` symbol ','
                         void $ symbol ')' <* symbol '='
                         expr <- parseExpression
-                        FunctionInfo s xs expr <$ (eof <|> symbol ';')
+                        (s, xs, expr) <$ (eof <|> symbol ';')
 
-defResultParser :: Parser ResultExpression
+defResultParser :: Parser FExpr
 defResultParser = lexeme $ do   void $ whitespace *> lexeme (keyword "result") <* symbol '='
                                 parseExpression <* (eof <|> symbol ';')
 
-parseProgram :: Parser Program
-parseProgram = Program <$> defResultParser <*> many defParser
+parseProgram :: Parser FProgram
+parseProgram = (,) <$> defResultParser <*> many defParser
 
 
 --------------------------------------------------------------------------------------------
@@ -186,15 +186,15 @@ mkParser :: Parser a -> String -> Either ParseError a
 mkParser p = parse (whitespace *> p <* eof) ""
 
 -- Given a string, run the expression parser.
-exprParser :: String -> Either ParseError Expression
+exprParser :: String -> Either ParseError FExpr
 exprParser = mkParser parseExpression
 
 -- Given a string, run the program parser.
-programParser :: String -> Either ParseError Program
+programParser :: String -> Either ParseError FProgram
 programParser = mkParser parseProgram
 
 -- Given a file path, run the program parser on that file.
-parseFile :: FilePath -> IO (Either ParseError Program)
+parseFile :: FilePath -> IO (Either ParseError FProgram)
 parseFile = fmap programParser . readFile 
 
 

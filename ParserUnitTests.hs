@@ -21,5 +21,5 @@ runTests :: (Eq a, Show a) => Parser a -> [(String, a)] -> IO H.Counts
 runTests p = H.runTestTT . H.TestList . map (makeTest p)
 
 
-runProgramTests :: [(String, Program)] -> IO H.Counts
+runProgramTests :: [(String, FProgram)] -> IO H.Counts
 runProgramTests = runTests parseProgram
