@@ -7,8 +7,8 @@ import Debug.Trace
 
 import Types
 
-type MapParams = [(String, [String])]
-type MapIndex = [(String, Int)]
+type MapParams = [(String, [String])]  -- Maps "function name" to "parameter array"
+type MapIndex = [(String, Int)]        -- Maps "function name" to "current CALL index to be used"
 
 type TransformationUtilities = (IProgram, MapIndex, MapParams)
 
@@ -18,31 +18,14 @@ transform fprog = iprog
         util = trace ("phase 1 : printing util " ++ show x) (x)
         x = add_actuals fprog ([], [], [])
         (iprogTmp, _, _) = convert_to_unary fprog util
-        iprog = iprogTmp --find_and_reverse_actuals iprogTmp
-    
-
--- 3rd pass
-find_and_reverse_actuals :: IProgram -> IProgram
-find_and_reverse_actuals [] = []
-find_and_reverse_actuals ((n, act) : rs) =
-    case act of 
-        IActuals ls -> ((n, IActuals (reverse ls)) : res)
-        _ -> ((n, act) : res)
-    where 
-        res = find_and_reverse_actuals rs
-
--- // 3rd pass
-
-
+        iprog = find_and_reverse_actuals iprogTmp  -- iprogTmp
 
 -- 1st pass
-parse_def_for_actuals ::  [String] -> IProgram -> IProgram
-parse_def_for_actuals [] iProg = iProg 
-parse_def_for_actuals (param : rest) iProg =  ( (param, IActuals []) : iProg )
--- TODO: check if this is valid constructor
 
+-- Parse the FDefinitions and create empty IActuals for each unique parameter of the FProgram.
+-- Side effect: Create "mapIndex" and "mapParams"
 add_actuals :: FProgram -> TransformationUtilities -> TransformationUtilities
-add_actuals (res, []) util = util
+add_actuals (_, []) util = util
 add_actuals (res, (fdef : fdefs)) (iProgram, mapIndex, mapParams) =
         add_actuals (res, fdefs) (iProgram', mapIndex', mapParams')
     where
@@ -50,52 +33,33 @@ add_actuals (res, (fdef : fdefs)) (iProgram, mapIndex, mapParams) =
         iProgram' = parse_def_for_actuals fparams iProgram
         mapIndex' = ((fname, 0) : mapIndex)
         mapParams' = ((fname, fparams) : mapParams)
+
+-- Parse the "Parameter" field of an FDefinition and create empty IActuals for each param.
+parse_def_for_actuals ::  [String] -> IProgram -> IProgram
+parse_def_for_actuals [] iProg = iProg 
+parse_def_for_actuals (param : rest) iProg =  ( (param, IActuals []) : iProg )
+
+
 -- // 1st pass
 
 -- 2nd pass
--- Remember to use convert unary first on the result --
--- this is a bit asymmetric and inconvenient but w/e
-convert_to_unary :: FProgram -> TransformationUtilities -> TransformationUtilities
-convert_to_unary (_, []) util = util
-convert_to_unary (res, (fdef : fdefs)) util =
-        convert_to_unary (res, fdefs) util'
-    where
-        (iProg, mapIndex, mapParams) = trace ("print def conversion: " ++ show x) x
-        x = convert_fdef_to_unary ("result", [], res) util
-        util' = convert_fdef_to_unary fdef (iProg, mapIndex, mapParams)
 
-convert_fdef_to_unary :: FDefinition -> TransformationUtilities -> TransformationUtilities
-convert_fdef_to_unary (fname, _, fexpr) (iProg, mapIndex, mapParams) = 
-        (iProg', mapIndex', mapParams)
+-- (wrapper) Combine "result" with the rest of "FDefinitions" and transform it to an IProgram
+convert_to_unary :: FProgram -> TransformationUtilities -> TransformationUtilities
+convert_to_unary (res, fdefs) util =
+        convert_fdefs_to_unary totalFdefs util
+    where  -- this is a bit asymmetric and inconvenient but w/e
+        totalFdefs = ( ("result", [], res) : fdefs )
+
+-- Convert FDefinitions to IDefinitions
+convert_fdefs_to_unary :: [FDefinition] -> TransformationUtilities -> TransformationUtilities
+convert_fdefs_to_unary [] util = util
+convert_fdefs_to_unary ((fname, _, fexpr) : rs)  (iProg, mapIndex, mapParams) = 
+        convert_fdefs_to_unary rs (iProg', mapIndex', mapParams)
     where
         (iExpr, tempIProg, mapIndex') = convert_fexpr_to_unary fexpr (iProg, mapIndex, mapParams)
         iDef = (fname, iExpr)
         iProg' = (iDef : tempIProg)
-
-find_and_update_index :: String -> MapIndex -> (Int, MapIndex)
-find_and_update_index fn1 ((fn2, fi) : rs) = 
-        if fn1 == fn2 then (fi, ((fn2, fi+1) : rs))
-                      else (findex, ((fn2, fi) : res))
-    where 
-        (findex, res) = find_and_update_index fn1 rs
-
-find_and_update_actuals :: String -> IExpr -> IProgram -> IProgram
-find_and_update_actuals n1 iexpr [] = trace ("!!!!!!!!!!! hit base case " ++ show n1 ++ " iexpr: " ++ show iexpr) [] 
-find_and_update_actuals n1 iexpr ((n2, act) : rs) =
-        if n1 == n2
-            then
-                case act of 
-                    IActuals ls -> ((n1, IActuals (iexpr : ls)) : rs)
-                    _ -> ((n2, act) : res)  -- Func def -> this code path will never be reached
-            else 
-                case act of 
-                    IActuals ls -> ((n2, IActuals ls) : res)
-                    _ -> ((n2, act) : res) -- This will be reached and it's needed for the case that we're checking a func def instead of a var def (with actuals list)
-    where 
-        res = find_and_update_actuals n1 iexpr rs
-
-find_params :: String -> [(String, [String])] -> [String]
-find_params p1 ((p2, x) : ps) = if p1 == p2 then x else find_params p1 ps   
 
 convert_fexpr_to_unary :: FExpr -> TransformationUtilities -> (IExpr, IProgram, MapIndex)
 convert_fexpr_to_unary (FVar tkn) (iprog, mapindex, mapP) =
@@ -107,27 +71,27 @@ convert_fexpr_to_unary (FBool tkn) (iprog, mapindex, mapP) =
 convert_fexpr_to_unary (FBinaryOp op fexp1 fexp2) (iprog, mapindex, mapP) =
         (iexpFinal, iprog2, mapindex2)
     where
-        (iexp1, iprog1, mapindex1) = convert_fexpr_to_unary fexp2 (iprog, mapindex, mapP)
-        (iexp2, iprog2, mapindex2) = convert_fexpr_to_unary fexp1 (iprog1, mapindex1, mapP)
+        (iexp1, iprog1, mapindex1) = convert_fexpr_to_unary fexp1 (iprog, mapindex, mapP)
+        (iexp2, iprog2, mapindex2) = convert_fexpr_to_unary fexp2 (iprog1, mapindex1, mapP)
         iexpFinal = IBinaryOp op iexp1 iexp2
 convert_fexpr_to_unary (FBooleanOp op fexp1 fexp2) (iprog, mapindex, mapP) =
         (iexpFinal, iprog2, mapindex2)
     where
-        (iexp1, iprog1, mapindex1) = convert_fexpr_to_unary fexp2 (iprog, mapindex, mapP)
-        (iexp2, iprog2, mapindex2) = convert_fexpr_to_unary fexp1 (iprog1, mapindex1, mapP)
+        (iexp1, iprog1, mapindex1) = convert_fexpr_to_unary fexp1 (iprog, mapindex, mapP)
+        (iexp2, iprog2, mapindex2) = convert_fexpr_to_unary fexp2 (iprog1, mapindex1, mapP)
         iexpFinal = IBooleanOp op iexp1 iexp2
 convert_fexpr_to_unary (FCompOp op fexp1 fexp2) (iprog, mapindex, mapP) =
         (iexpFinal, iprog2, mapindex2)
     where
-        (iexp1, iprog1, mapindex1) = convert_fexpr_to_unary fexp2 (iprog, mapindex, mapP)
-        (iexp2, iprog2, mapindex2) = convert_fexpr_to_unary fexp1 (iprog1, mapindex1, mapP)
+        (iexp1, iprog1, mapindex1) = convert_fexpr_to_unary fexp1 (iprog, mapindex, mapP)
+        (iexp2, iprog2, mapindex2) = convert_fexpr_to_unary fexp2 (iprog1, mapindex1, mapP)
         iexpFinal = ICompOp op iexp1 iexp2
 convert_fexpr_to_unary (FIfThenElse fexp1 fexp2 fexp3) (iprog, mapindex, mapP) =
         (iexpFinal, iprog3, mapindex3)
     where
-        (iexp1, iprog1, mapindex1) = convert_fexpr_to_unary fexp3 (iprog, mapindex, mapP)
+        (iexp1, iprog1, mapindex1) = convert_fexpr_to_unary fexp1 (iprog, mapindex, mapP)
         (iexp2, iprog2, mapindex2) = convert_fexpr_to_unary fexp2 (iprog1, mapindex1, mapP)
-        (iexp3, iprog3, mapindex3) = convert_fexpr_to_unary fexp1 (iprog2, mapindex2, mapP)
+        (iexp3, iprog3, mapindex3) = convert_fexpr_to_unary fexp3 (iprog2, mapindex2, mapP)
         iexpFinal = IIfThenElse iexp1 iexp2 iexp3
 convert_fexpr_to_unary (FUnaryOp op fexp) (iprog, mapindex, mapP) =
         (iexpFinal, iprog1, mapindex1)
@@ -147,7 +111,6 @@ convert_fexpr_to_unary (FCall str fpar) (iprog, mapindex, mapP) =
         params = find_params str mapP
         (iprogFinal, mapindex2) = update_actuals fpar params (iprog, mapindex1, mapP)
 
-
 update_actuals :: [FExpr] -> [String] -> TransformationUtilities -> (IProgram, MapIndex)
 update_actuals [] [] (iprog, mapindex, _) = (iprog, mapindex)
 update_actuals (fexpr : fs) (param : ps) (iprog, mapindex, mapP) = 
@@ -156,7 +119,44 @@ update_actuals (fexpr : fs) (param : ps) (iprog, mapindex, mapP) =
         (iexpr, iprog1, mapindex1) = convert_fexpr_to_unary fexpr (iprog, mapindex, mapP)
         iprog2 = find_and_update_actuals param iexpr iprog1
 
+
+find_and_update_index :: String -> MapIndex -> (Int, MapIndex)
+find_and_update_index fn1 ((fn2, fi) : rs) = 
+        if fn1 == fn2 then (fi, ((fn2, fi+1) : rs))
+                      else (findex, ((fn2, fi) : res))
+    where 
+        (findex, res) = find_and_update_index fn1 rs
+
+find_and_update_actuals :: String -> IExpr -> IProgram -> IProgram
+find_and_update_actuals n1 iexpr ((n2, act) : rs) =
+        if n1 == n2
+            then
+                case act of 
+                    IActuals ls -> ((n1, IActuals (iexpr : ls)) : rs)
+                    _ -> ((n2, act) : res)  -- Func def -> this code path will never be reached
+            else 
+                case act of 
+                    IActuals ls -> ((n2, IActuals ls) : res)
+                    _ -> ((n2, act) : res) -- This will be reached and it's needed for the case that we're checking a func def instead of a var def (with actuals list)
+    where 
+        res = find_and_update_actuals n1 iexpr rs
+
+find_params :: String -> [(String, [String])] -> [String]
+find_params p1 ((p2, x) : ps) = if p1 == p2 then x else find_params p1 ps   
+
 -- // 2nd pass
+
+-- 3rd pass (might be optional)
+find_and_reverse_actuals :: IProgram -> IProgram
+find_and_reverse_actuals [] = []
+find_and_reverse_actuals ((n, act) : rs) =
+    case act of 
+        IActuals ls -> ((n, IActuals (reverse ls)) : res)
+        _ -> ((n, act) : res)
+    where 
+        res = find_and_reverse_actuals rs
+-- // 3rd pass
+
 
 
 -- Transform logic
