@@ -36,9 +36,10 @@ add_actuals (res, (fdef : fdefs)) (iProgram, mapIndex, mapParams) =
 
 -- Parse the "Parameter" field of an FDefinition and create empty IActuals for each param.
 parse_def_for_actuals ::  [String] -> IProgram -> IProgram
-parse_def_for_actuals [] iProg = iProg 
-parse_def_for_actuals (param : rest) iProg =  ( (param, IActuals []) : iProg )
-
+parse_def_for_actuals [] iProg = iProg
+parse_def_for_actuals (param : rest) iProg = ( (param, IActuals []) : iProg' )
+    where
+        iProg' = parse_def_for_actuals rest iProg
 
 -- // 1st pass
 
@@ -114,7 +115,7 @@ convert_fexpr_to_unary (FCall str fpar) (iprog, mapindex, mapP) =
 update_actuals :: [FExpr] -> [String] -> TransformationUtilities -> (IProgram, MapIndex)
 update_actuals [] [] (iprog, mapindex, _) = (iprog, mapindex)
 update_actuals (fexpr : fs) (param : ps) (iprog, mapindex, mapP) = 
-        (iprog2, mapindex1)
+        update_actuals fs ps (iprog2, mapindex1, mapP)
     where
         (iexpr, iprog1, mapindex1) = convert_fexpr_to_unary fexpr (iprog, mapindex, mapP)
         iprog2 = find_and_update_actuals param iexpr iprog1
