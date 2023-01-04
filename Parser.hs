@@ -136,7 +136,8 @@ operatorTable =
             binary ">=" (FCompOp GtEq) E.AssocNone,
             binary "<" (FCompOp Lt) E.AssocNone,
             binary ">" (FCompOp Gt) E.AssocNone,
-            binary "==" (FCompOp Eq) E.AssocNone
+            binary "==" (FCompOp Eq) E.AssocNone,
+            binary "/=" (FCompOp Neq) E.AssocNone
         ],
         [
             prefixK "not" $ FUnaryOp Not
