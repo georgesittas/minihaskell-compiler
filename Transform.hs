@@ -1,9 +1,4 @@
-module Transform (
-    transform
-) where
-
-
-import Debug.Trace
+module Transform (transform) where
 
 import Types
 
@@ -34,7 +29,7 @@ add_actuals (res, (fdef : fdefs)) (iProgram, mapIndex, mapParams) =
         mapParams' = ((fname, fparams) : mapParams)
 
 -- Parse the "Parameter" field of an FDefinition and create empty IActuals for each param.
-parse_def_for_actuals ::  [String] -> IProgram -> IProgram
+parse_def_for_actuals :: [String] -> IProgram -> IProgram
 parse_def_for_actuals [] iProg = iProg
 parse_def_for_actuals (param : rest) iProg = ( (param, IActuals []) : iProg' )
     where
@@ -170,34 +165,3 @@ find_and_reverse_actuals ((n, act) : rs) =
     where 
         res = find_and_reverse_actuals rs
 -- // 3rd pass
-
-
-
--- Transform logic
-{- 
-    1st pass:
-    Parse FProgram to create actuals, aka IDefinitions with (name of variable, empty actuals list).
-    Add them to a fresh IProgram.
-    In this step, also create a mapping of (function name => index) for the call_X substitution,
-    Optionally create a mapping of (function name => typical params).
-
-    2nd pass:
-    Parse FProgram to create the IDefinitions of the functions.
-    We need to substitute each eg. f(1) with call_MAP[f] and add 1 to the x = actuals( ... ) list.
-
-    - If we substitute a function call with call_X, then immediately parse the actuals list for subsequent 
-    (nested) transformations: 
-
-    f(f(1)) --> x = []
-        a) call_0 f, x = [f(1)] 
-        b) x = [call_1 f, 1]
-
-    f(f(f(1))) --> x = []
-        a) call_0 f, x = [f(f(1))] 
-        b) call_0 f, x = [call_1 f, f(1)]
-        c) call_0 f, x = [call_1 f, call_2 f, 1]
-
-    3rd pass:
-
-    Reverse the actuals lists
--}
