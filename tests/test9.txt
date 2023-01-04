@@ -1,0 +1,2 @@
+result = ackermann(4,0);
+ackermann (n,m) = if n == 0 then m+1 else if m == 0 then ackermann (n-1,1) else ackermann (n-1, ackermann (n, m-1))
