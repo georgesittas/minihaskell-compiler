@@ -117,9 +117,11 @@ update_actuals [] [] (iprog, mapindex, _) = (iprog, mapindex)
 update_actuals (fexpr : fs) (param : ps) (iprog, mapindex, mapP) = 
         update_actuals fs ps (iprog2, mapindex1, mapP)
     where
+        previous_actuals_length = length (find_actuals param iprog)
         (iexpr, iprog1, mapindex1) = convert_fexpr_to_unary fexpr (iprog, mapindex, mapP)
-        iprog2 = find_and_update_actuals param iexpr iprog1
-
+        new_actuals_length = length (find_actuals param iprog1)
+        index_to_insert_iexpr = new_actuals_length - previous_actuals_length
+        iprog2 = find_and_update_actuals param index_to_insert_iexpr iexpr iprog1
 
 find_and_update_index :: String -> MapIndex -> (Int, MapIndex)
 find_and_update_index fn1 ((fn2, fi) : rs) = 
@@ -128,22 +130,34 @@ find_and_update_index fn1 ((fn2, fi) : rs) =
     where 
         (findex, res) = find_and_update_index fn1 rs
 
-find_and_update_actuals :: String -> IExpr -> IProgram -> IProgram
-find_and_update_actuals n1 iexpr ((n2, act) : rs) =
+find_and_update_actuals :: String -> Int -> IExpr -> IProgram -> IProgram
+find_and_update_actuals n1 index iexpr ((n2, act) : rs) =
         if n1 == n2
             then
                 case act of 
-                    IActuals ls -> ((n1, IActuals (iexpr : ls)) : rs)
+                    IActuals ls -> ((n1, IActuals (insert_expr_in_actuals iexpr ls index)) : rs)
                     _ -> ((n2, act) : res)  -- Func def -> this code path will never be reached
             else 
-                case act of 
-                    IActuals ls -> ((n2, IActuals ls) : res)
-                    _ -> ((n2, act) : res) -- This will be reached and it's needed for the case that we're checking a func def instead of a var def (with actuals list)
+                ((n2, act) : res)
     where 
-        res = find_and_update_actuals n1 iexpr rs
+        res = find_and_update_actuals n1 index iexpr rs
+
+find_actuals :: String -> IProgram -> [IExpr]
+find_actuals n1 ((n2, act) : rs) =
+    if n1 == n2
+        then
+            case act of
+                IActuals ls -> ls
+                _ -> []
+        else find_actuals n1 rs
 
 find_params :: String -> [(String, [String])] -> [String]
 find_params p1 ((p2, x) : ps) = if p1 == p2 then x else find_params p1 ps   
+
+insert_expr_in_actuals :: IExpr -> [IExpr] -> Int -> [IExpr]
+insert_expr_in_actuals iexpr actuals 0 = (iexpr : actuals)
+insert_expr_in_actuals iexpr (actual : rs) index =
+    actual : (insert_expr_in_actuals iexpr rs (index - 1))
 
 -- // 2nd pass
 
