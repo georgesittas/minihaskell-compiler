@@ -15,10 +15,9 @@ type TransformationUtilities = (IProgram, MapIndex, MapParams)
 transform :: FProgram -> IProgram
 transform fprog = iprog 
     where 
-        util = trace ("phase 1 : printing util " ++ show x) (x)
-        x = add_actuals fprog ([], [], [])
+        util = add_actuals fprog ([], [], [])
         (iprogTmp, _, _) = convert_to_unary fprog util
-        iprog = find_and_reverse_actuals iprogTmp  -- iprogTmp
+        iprog = find_and_reverse_actuals iprogTmp
 
 -- 1st pass
 
