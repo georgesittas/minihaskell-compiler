@@ -1,15 +1,20 @@
+##############################################################################################################################
 #
 # Usage: python3 test_script.py
 # Requirements: 1) Place this script in the "test" directory.
 #               2) Adjust path in "custom_exec_name" to reflect the path of your custom interpreter 
 #                  executable, relative to the directory where your tests exist.
 #               3) Adjust the main() function taking into account the naming scheme of your tests.
-#                  eg. if the naming scheme is "test{index}.txt" leave the main as is, and update the "num_tests" variable
+#                  eg. if the naming scheme is "test{index}.txt" leave the main as is, and update the "num_tests" variable.
+#               4) [Optionally] Adjust the "max_timeout" variable to reflect the max time that the custom interpeter or ghc
+#                               are allowed to run before being interrupted.
+##############################################################################################################################
 
 import subprocess
 
 custom_exec_name = '../TestAll'
-num_tests = 9
+num_tests = 10
+max_timeout = 20
 
 def main():  # Output failed tests
     num_tests_to_check = num_tests
@@ -30,12 +35,15 @@ def main():  # Output failed tests
 
 def check_with_custom(filename):
     exec_name = custom_exec_name
-    res = subprocess.check_output(  # TODO : "rm" name
-        f'{exec_name} < {filename}; exit 0',
-        stderr=subprocess.STDOUT,
-        timeout=20,
-        shell=True
-    )
+    try:
+        res = subprocess.check_output(
+            f'{exec_name} < {filename}; exit 0',
+            stderr=subprocess.STDOUT,
+            timeout=max_timeout,
+            shell=True
+        )
+    except:
+        res = b'error'
 
     res = res.decode().strip()  # Byte to Str
     try:
@@ -46,14 +54,19 @@ def check_with_custom(filename):
 
 
 def check_with_ghc(filename):
-    tmpname = 'tmp' + filename
-    res = subprocess.check_output(  # TODO : Also "rm" filename after running
-        f'cp {filename} {tmpname}.hs && printf "\n\nmain = print result\n\n" >> {tmpname}.hs && ghc {tmpname}.hs && ./{tmpname} \
-            && rm -f ./{tmpname} ./{tmpname}.hi ./{tmpname}.o ./{tmpname}.hs ; exit 0',
-        stderr=subprocess.STDOUT,
-        timeout=20,
-        shell=True
-    )
+    tmpname = 'tmp_' + filename
+    rm_cmd = f'rm -f ./{tmpname} ./{tmpname}.hi ./{tmpname}.o ./{tmpname}.hs'
+    try:
+        res = subprocess.check_output(
+            f'cp {filename} {tmpname}.hs && printf "\n\nmain = print result\n\n" >> {tmpname}.hs \
+                && ghc {tmpname}.hs && ./{tmpname} && {rm_cmd}; exit 0',
+            stderr=subprocess.STDOUT,
+            timeout=max_timeout,
+            shell=True
+        )
+    except:
+        subprocess.check_output(rm_cmd, shell=True) # Cleanup leftovers
+        res = b'error'
 
     res = res.decode().strip()  # Byte to Str
     if 'error' in res.lower():
