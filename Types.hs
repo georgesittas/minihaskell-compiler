@@ -1,39 +1,59 @@
 module Types where
 
-type Identifier = String
-type NumberLiteral = Int
-type ResultExpression = Expression
+{- Functional Types -}
 
 -- AST representation of the source language (a small subset of Haskell).
-data Program =  Program ResultExpression [FunctionDef] 
-        deriving (Eq, Show)
+type FProgram = (FExpr, [FDefinition])
 
 -- Example: the function definition "foo(x, y) = x + y" is parsed into
--- FunctionInfo "foo" ["x", "y"] (BinaryOp Plus (ExprIdentifier "x") (ExprIdentifier "y")).
-data FunctionDef =  FunctionInfo Identifier [Identifier] Expression 
+-- ("foo", ["x", "y"], (BinaryOp Plus (ExprIdentifier "x") (ExprIdentifier "y")).
+type FDefinition = (String, [String], FExpr)
+
+data FExpr
+        = FVar String
+        | FNum Int
+        | FBool Bool
+        | FParens FExpr
+        | FIfThenElse FExpr FExpr FExpr
+        | FCall String [FExpr]
+        | FCompOp OpCompare FExpr FExpr
+        | FBinaryOp OpBinary FExpr FExpr
+        | FBooleanOp OpBool FExpr FExpr
+        | FUnaryOp OpUnary FExpr
         deriving (Eq, Show)
 
-data Expression =   ExprIdentifier Identifier
-                |   ExprNum NumberLiteral
-                |   ExprBool Bool
-                |   ExprParens Expression
-                |   IfThenElse Expression Expression Expression
-                |   Call Identifier [Expression]
-                |   CompOp   OpCompare Expression Expression
-                |   BinaryOp OpBinary Expression Expression
-                |   BooleanOP OpBool Expression Expression
-                |   UnaryOp  OpUnary  Expression
+{- Intensional Types -}
 
+type IProgram = [IDefinition]
+
+type IDefinition = (String, IExpr)
+
+type IEnv = [Int]
+
+data IExpr
+        = IVar String
+        | INum Int
+        | IBool Bool
+        | IParens IExpr
+        | IIfThenElse IExpr IExpr IExpr
+        | ICall Int String
+        | IActuals [IExpr]
+        | ICompOp OpCompare IExpr IExpr
+        | IBinaryOp OpBinary IExpr IExpr
+        | IBooleanOp OpBool IExpr IExpr
+        | IUnaryOp OpUnary IExpr
         deriving (Eq, Show)
+
+{- Common Types -}
 
 data OpBinary = Plus | Mult | Minus | Div
         deriving (Eq, Show)
 
-data OpCompare = OpLTEQ | OpLT | OpGTEQ | OpGT | OpEQ | OpNEQ
+data OpCompare = LtEq | Lt | GtEq | Gt | Eq | Neq
         deriving (Eq, Show)
 
 data OpBool = And | Or
         deriving (Eq, Show)
 
-data OpUnary  = UnaryPlus | UnaryNegation | Not
+data OpUnary = Positive | Negative | Not
         deriving (Eq, Show)
