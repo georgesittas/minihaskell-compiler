@@ -9,4 +9,7 @@ main = do
         contents <- getContents
         case programParser contents of
             Left err -> error ("Parse Error")
-            Right fp -> print ( transform (trace ("print the fp " ++ show fp) fp) )
+            Right fp ->
+                case (eval $ transform fp) of
+                    INum n -> print n
+                    _ -> error ("Runtime Error")
