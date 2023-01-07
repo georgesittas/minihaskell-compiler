@@ -6,21 +6,18 @@ module Parser (
     parseExpression,
     parseProgram,
     programParser,
-    exprParser,
     parseFile,
-    exprPrettyParser,
     parsePrettyFile,
     programPrettyParser
 ) where
 
 import Types 
 import Control.Monad
-import Text.Parsec 
+import Text.Parsec
 import qualified Text.Parsec.Expr as E
 import Data.Char
 import Text.Parsec.String (Parser)
 import Control.Monad.Identity
-import qualified Text.Parsec.Prim as Prim
 import Text.Pretty.Simple ( pPrint )
 
 
@@ -186,10 +183,6 @@ parseProgram = (,) <$> defResultParser <*> many defParser
 mkParser :: Parser a -> String -> Either ParseError a
 mkParser p = parse (whitespace *> p <* eof) ""
 
--- Given a string, run the expression parser.
-exprParser :: String -> Either ParseError FExpr
-exprParser = mkParser parseExpression
-
 -- Given a string, run the program parser.
 programParser :: String -> Either ParseError FProgram
 programParser = mkParser parseProgram
@@ -205,9 +198,6 @@ parseFile = fmap programParser . readFile
 
 mkPrettyParser :: (Show a) => Parser a -> String -> IO ()
 mkPrettyParser p = pPrint . mkParser p
-
-exprPrettyParser :: String -> IO ()
-exprPrettyParser = mkPrettyParser parseExpression
 
 programPrettyParser :: String -> IO ()
 programPrettyParser = mkPrettyParser parseProgram

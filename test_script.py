@@ -10,9 +10,10 @@
 
 import glob
 import subprocess
+import time
 
 
-test_dir         = './tests'
+test_dir = './tests'
 custom_exec_name = './TestAll'
 
 max_timeout = 20
@@ -20,6 +21,8 @@ max_timeout = 20
 
 def main():
     tests_failed = 0
+
+    start = time.time()
 
     print('> Begin testing...')
     for testfile in glob.glob(f'{test_dir}/*'):
@@ -29,8 +32,11 @@ def main():
             print('> Failed: ' + testfile)
             tests_failed += 1
 
+    end = time.time()
+
     print('> Finished testing...')
-    print('> Tests failed: ', tests_failed)
+    print('> Tests failed:', tests_failed)
+    print('> Total elapsed time:', end - start)
     print('> Bye!')
 
 
