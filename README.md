@@ -1,2 +1,6 @@
-# PL-principles-2022
-Design and implementation of the course's project assignment.
+## Usage Instructions
+
+```bash
+make
+python test_script.py
+```
