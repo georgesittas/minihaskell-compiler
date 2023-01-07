@@ -20,9 +20,10 @@ def main():  # Output failed tests
     num_tests_to_check = num_tests
     i = 0
     tests_failed = 0
+    lpad = len(str(num_tests))  # number of spaces to use as left-padding for the index of the test file
     print ("> Begin testing...")
     while i <= num_tests_to_check:
-        filename = 'test' + str(i) + '.txt'
+        filename = 'test' + str(i).zfill(lpad) + '.txt'
         success = test_custom_vs_ghc(filename)
         if not success:
             print("> Fail: " + filename)
