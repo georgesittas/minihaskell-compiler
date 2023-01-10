@@ -1,6 +1,6 @@
------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------
 --- This module implements a parser for a subset of the haskell language represented by the FProgram type (Types.hs) ---
------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------
 
 module Parser (
     parseExpression,
@@ -18,7 +18,7 @@ import qualified Text.Parsec.Expr as E
 import Data.Char
 import Text.Parsec.String (Parser)
 import Control.Monad.Identity
-import Text.Pretty.Simple ( pPrint )
+import Text.Pretty.Simple (pPrint)
 
 
 -----------------------------------------------------------------------------------------

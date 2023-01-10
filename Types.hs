@@ -1,5 +1,14 @@
 module Types where
 
+{- Recommended type signatures for functions "transform" and "eval":
+
+    -- Transforms a MiniHaskell program into an intensional one.
+    transform :: FProgram -> IProgram
+
+    -- Evaluates an intensional program and returns the resulting expression.
+    eval :: IProgram -> IExpr
+-}
+
 {- Functional Types -}
 
 -- AST representation of the source language (a small subset of Haskell).
