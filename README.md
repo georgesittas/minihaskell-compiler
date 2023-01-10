@@ -18,4 +18,4 @@ make clean
 
 ### Note
 
-As described in the related [articles](pdfs), this implementation could be made a lot more efficient. However, this was outside the project's scope, and hence the interpreter is expected to be rather slow.
+As described in the related [articles](pdfs), this implementation could be made a lot more efficient. However, this was outside the project's scope, and hence the interpreter is expected to be rather slow. A faster implementation in Rust can be found [here](https://github.com/nikos-alexandris/ic).
