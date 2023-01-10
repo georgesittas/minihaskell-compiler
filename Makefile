@@ -1,5 +1,5 @@
 compile:
-	ghc --make TestAll.hs -package mtl
+	$(MAKE) -C ./src/ compile
 
 clean:
-	rm -f *.hi *.o TestParser TestAll
+	$(MAKE) -C ./src/ clean

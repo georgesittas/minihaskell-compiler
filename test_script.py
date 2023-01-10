@@ -14,7 +14,7 @@ import time
 
 
 test_dir = './tests'
-custom_exec_name = './TestAll'
+custom_exec_name = './src/TestAll'
 
 max_timeout = 20
 
