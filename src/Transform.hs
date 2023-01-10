@@ -150,7 +150,7 @@ insert_expr_in_actuals iexpr (actual : rs) index =
 
 -- // 2nd pass
 
--- 3rd pass (might be optional)
+-- 3rd pass
 find_and_reverse_actuals :: [IDefinition] -> [IDefinition]
 find_and_reverse_actuals [] = []
 find_and_reverse_actuals ((n, act) : rs) =

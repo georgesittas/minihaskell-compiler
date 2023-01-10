@@ -12,10 +12,14 @@ module Types where
 {- Functional Types -}
 
 -- AST representation of the source language (a small subset of Haskell).
+-- FExpr contains the AST representation of the expression assigned in the "result" function.
+-- [FDefinition] contains the AST representation of every other function definition.
 type FProgram = (FExpr, [FDefinition])
 
+-- FDefinition consists of the following triplet: 
+--      (Function Name, [Typical Parameters], AST Representation of Assigned Expression)
 -- Example: the function definition "foo(x, y) = x + y" is parsed into
--- ("foo", ["x", "y"], (BinaryOp Plus (ExprIdentifier "x") (ExprIdentifier "y")).
+--      ("foo", ["x", "y"], (IBinaryOp Plus (FVar "x") (FVar "y")).
 type FDefinition = (String, [String], FExpr)
 
 data FExpr
@@ -33,10 +37,16 @@ data FExpr
 
 {- Intensional Types -}
 
+-- AST representation of the intermediate (Intensional) language.
 type IProgram = [IDefinition]
 
+-- IDefinition consists of the pair:
+--      (Function Name, AST Representation of Intensional Expression)
+-- Example: the function definition "foo = x + y" is parsed into
+--      ("foo", (IBinaryOp Plus (IVar "x") (IVar "y")).
 type IDefinition = (String, IExpr)
 
+-- IEnv represents the "tags" environment variable to be used by the Intensional evaluator.
 type IEnv = [Int]
 
 data IExpr
