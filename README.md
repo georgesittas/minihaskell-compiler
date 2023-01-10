@@ -6,7 +6,7 @@ The goal for this project was to design and implement the final assignment for t
 
 ### Intensional Code
 
-Intensional code is a dataflow programming language inspired by [Lucid](https://en.wikipedia.org/wiki/Lucid_(programming_language), and has been described extensively in the paper "First-order functional languages and intensional logic", by P. Rontogiannis and W. W. Wadge [1].
+Intensional code is a dataflow programming language inspired by [Lucid](https://en.wikipedia.org/wiki/Lucid_(programming_language)), and has been described extensively in the paper "First-order functional languages and intensional logic", by P. Rontogiannis and W. W. Wadge [1].
 
 ### Usage
 
