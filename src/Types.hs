@@ -19,7 +19,7 @@ type FProgram = (FExpr, [FDefinition])
 -- FDefinition consists of the following triplet: 
 --      (Function Name, [Typical Parameters], AST Representation of Assigned Expression)
 -- Example: the function definition "foo(x, y) = x + y" is parsed into
---      ("foo", ["x", "y"], (IBinaryOp Plus (FVar "x") (FVar "y")).
+--      ("foo", ["x", "y"], (FBinaryOp Plus (FVar "x") (FVar "y")).
 type FDefinition = (String, [String], FExpr)
 
 data FExpr
