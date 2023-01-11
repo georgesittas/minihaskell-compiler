@@ -1,8 +1,9 @@
+{- Usage: ./a.out < input.txt -}
+
 import Types
-import Parser (parsePrettyFile, programParser)
+import Parser (programParser)
 import Transform (transform)
 import Intensional (eval)
-import Debug.Trace
 
 main :: IO()
 main = do
@@ -10,6 +11,6 @@ main = do
         case programParser contents of
             Left err -> error ("Parse Error")
             Right fp ->
-                case (eval $ transform fp) of
+                case eval (transform fp) of
                     INum n -> print n
                     _ -> error ("Runtime Error")

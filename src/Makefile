@@ -1,5 +1,8 @@
 compile:
-	ghc --make TestAll.hs -package mtl
+	ghc --make TestMain.hs -package mtl
 
 clean:
-	rm -f *.hi *.o TestParser TestAll
+	rm -f *.hi *.o TestParser TestMain TestShowcase
+
+showcase:
+	ghc --make TestShowcase.hs -package mtl
