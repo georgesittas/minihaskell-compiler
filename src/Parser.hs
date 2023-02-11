@@ -12,12 +12,11 @@ module Parser (
 ) where
 
 import Types 
-import Control.Monad
+import Control.Monad ( guard, void )
 import Text.Parsec
 import qualified Text.Parsec.Expr as E
-import Data.Char
 import Text.Parsec.String (Parser)
-import Control.Monad.Identity
+import Control.Monad.Identity (Identity )
 import Text.Pretty.Simple (pPrint)
 
 
@@ -146,9 +145,9 @@ operatorTable =
     ]
     where
         prefix  s f = E.Prefix (f <$ operator s)
-        prefixK k f = E.Prefix (f <$ keyword  k)
+        prefixK k f = E.Prefix (f <$ lexeme (keyword  k))
         binary  s f = E.Infix  (f <$ operator s)
-        binaryK k f = E.Infix  (f <$ keyword  k)
+        --binaryK k f = E.Infix  (f <$ keyword  k)
 
 -- Builds an expression parser given the operator precedence table and the term parser.
 parseExpression :: Parser FExpr
