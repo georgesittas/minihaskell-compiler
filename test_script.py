@@ -52,14 +52,7 @@ def check_with_custom(testfile):
     except:
         res = b'error'
 
-    res = res.decode().strip()
-    try:
-        # Check if result can be converted to integer (aka if int or error was returned)
-        res = str(int(res))
-    except:
-        res = 'error'
-
-    return res
+    return res.decode().strip()
 
 
 def check_with_ghc(testfile):
@@ -83,11 +76,7 @@ def check_with_ghc(testfile):
     if 'error' in res.lower():
         res = 'error'
     else:
-        res = res.split('\n')[-1]
-        try:
-            res = str(int(res))
-        except:
-            res = 'error'
+        res = res.split('\n')[-1].strip()
 
     return res
 
@@ -99,7 +88,7 @@ def test_custom_vs_ghc(testfile):
     if ghc_res == 'error' or cus_res == 'error':
         return False
 
-    return int(ghc_res) == int(cus_res)
+    return ghc_res == cus_res
 
 
 if __name__ == '__main__':

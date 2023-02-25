@@ -56,12 +56,14 @@ eval' p ts (IBinaryOp op e0 e1) =
                 Div -> n0 `div` n1
         _ -> error "[Runtime error]: binary operation on non-numbers"
 eval' p ts (IBooleanOp op e0 e1) =
-    case (eval' p ts e0, eval' p ts e1) of
-        (IBool b0, IBool b1) ->
+    case eval' p ts e0 of
+        IBool b0 ->
             IBool $ case op of
-                And -> b0 && b1
-                Or -> b0 || b1
+                And -> b0 && unwrap (eval' p ts e1)
+                Or  -> b0 || unwrap (eval' p ts e1)
         _ -> error "[Runtime error]: boolean operation on non-booleans"
+  where unwrap (IBool x) = x
+        unwrap _         = error "[Runtime error]: boolean operation on non-booleans"
 eval' p ts (IUnaryOp op e) =
     case eval' p ts e of
         INum n ->
