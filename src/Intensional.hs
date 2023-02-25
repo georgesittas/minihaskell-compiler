@@ -45,7 +45,12 @@ eval' p ts (ICompOp op e0 e1) =
                 Gt -> n0 > n1
                 Eq -> n0 == n1
                 Neq -> n0 /= n1
-        _ -> error "[Runtime error]: comparison of non-numbers"
+        (IBool b0, IBool b1) ->
+            IBool $ case op of
+                Eq -> b0 == b1
+                Neq -> b0 /= b1
+                _ -> error "[Runtime error]: unsupported for booleans"
+        _ -> error "[Runtime error]: wrong comparison"
 eval' p ts (IBinaryOp op e0 e1) =
     case (eval' p ts e0, eval' p ts e1) of
         (INum n0, INum n1) ->
