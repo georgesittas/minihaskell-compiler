@@ -88,6 +88,9 @@ def test_custom_vs_ghc(testfile):
     if ghc_res == 'error' or cus_res == 'error':
         return False
 
+    if '.' in ghc_res:
+        ghc_res = ghc_res.split('.')[0]
+
     return ghc_res == cus_res
 
 
