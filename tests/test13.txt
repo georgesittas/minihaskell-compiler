@@ -1,0 +1,4 @@
+result = f(f(f(f(4)))) + f(5);
+f(x) = x + g(x,0);
+g(x,y) = y;
+

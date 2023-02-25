@@ -1,0 +1,3 @@
+result = (g(3,4) ||  g(5,6) ||  g(7,8)) && f();
+g(x,y) = True;
+f() = False;

@@ -1,0 +1,4 @@
+result = if f(5,-4) then g(1) else h(g(1));
+f(x,y) = x + 12 > y;
+g(z) = z * z;
+h(n) = n / (n-2);
