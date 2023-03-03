@@ -1,3 +1,3 @@
-result = f(f(1) + f(2) + g(3));
-g(n) = f(n);
+result = f(f(f(1))) + h(3,4);
+h(n,k) = (3 * n) + k;
 f(x) = x + 2;

@@ -1,1 +1,3 @@
-result = 2 + if True then 1 + if 2 >  3 then -3 else 1 + 5 else 1;
+result = not (f(True, False) || g(1,2) < 2);
+f(x,y) = x || (y && not x);
+g(z,w) = if z+1 <= w then (if z == 0 then 1 else 0) else 2;

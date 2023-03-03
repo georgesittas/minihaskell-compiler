@@ -1,11 +1,11 @@
 ##############################################################################################################################
-#
-# Usage: python3 test_script.py
-# Requirements: 1) Adjust path in "test_dir" to reflect the path of your test directory, relative to the script's directory.
-#               2) Adjust path in "custom_exec_name" to reflect the path of your custom interpreter executable, relative to
-#                  the directory where your tests exist.
-#               3) [Optionally] Adjust the value of "max_timeout" to reflect the max time that the custom interpeter or ghc
-#                               are allowed to run before being interrupted.
+#                                                                                                                            #
+# Usage: python3 test_script.py                                                                                              #
+# Requirements: 1) Adjust path in "test_dir" to reflect the path of your test directory, relative to the script's directory. #
+#               2) Adjust path in "custom_exec_name" to reflect the path of your custom interpreter executable, relative to  #
+#                  the directory where your tests exist.                                                                     #
+#               3) [Optionally] Adjust the value of "max_timeout" to reflect the max time that the custom interpeter or ghc  #
+#                               are allowed to run before being interrupted.                                                 #
 ##############################################################################################################################
 
 import glob
@@ -18,24 +18,38 @@ custom_exec_name = './src/TestMain'
 
 max_timeout = 20
 
+OKGREEN = '\033[92m'
+FAIL = '\033[91m'
+ENDC = '\033[0m'
+
 
 def main():
-    tests_failed = 0
+    failed_tests = []
+    n_failed_tests = 0
 
     start = time.time()
 
-    print('> Begin testing...')
+    print('> Begin testing ', end="", flush=True)
     for testfile in glob.glob(f'{test_dir}/*'):
         success = test_custom_vs_ghc(testfile)
 
         if not success:
-            print('> Failed: ' + testfile)
-            tests_failed += 1
+            failed_tests.append(testfile)
+            n_failed_tests += 1
+            print(FAIL + "F" + ENDC, end="", flush=True)
+        else:
+            print(OKGREEN + "." + ENDC, end="", flush=True)
 
     end = time.time()
 
-    print('> Finished testing...')
-    print('> Tests failed:', tests_failed)
+    print('\n> Finished testing...')
+    print('> Number of failed tests:', n_failed_tests)
+
+    if n_failed_tests:
+        print('> Failed tests:')
+        for test in failed_tests:
+            print('>  ', test)
+
     print('> Total elapsed time:', end - start)
     print('> Bye!')
 

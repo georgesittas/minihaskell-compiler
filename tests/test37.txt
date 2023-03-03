@@ -1,2 +1,0 @@
-result = False || f(True);
-f(n) = True;

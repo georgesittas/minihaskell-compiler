@@ -3,6 +3,3 @@ compile:
 
 clean:
 	rm -f *.hi *.o TestParser TestMain TestShowcase
-
-showcase:
-	ghc --make TestShowcase.hs -package mtl

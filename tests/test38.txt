@@ -1,3 +1,0 @@
-result = if ( (f(False) || y(5124)) /= True ) then False else f( True );
-f(x) = not (True && False);
-y(z) = False;

@@ -1,4 +1,0 @@
-result = g(f(3, 5) * (-2)) + h(-1);
-f(x,y) = x - (2 * y);
-g(z) = (-3 * z);
-h(t) = if (t < 0) then 1 else 0;

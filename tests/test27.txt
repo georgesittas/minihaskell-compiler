@@ -1,5 +1,2 @@
-result = f(f(1) + f(2) + g((h(3,f(g(4+c(13,3,5)))))));
-g(n) = f(n+10);
-f(x) = x + 2;
-h(z,y) = f(z) + f(y)*g(z*y+f(8)*5*g(9));
-c(a,b,l) = if a < 10 then b*f(f(f(f(g(h(1,g(l))))))) else c(a-1,b*f(7),l+1);
+result = False || f(True);
+f(n) = True;

@@ -1,4 +1,0 @@
-result = f(1, 1, 8) + ( g() - 7 ) + f(1,2,8);
-f(x,y,z) = (3 * x) - (2 * y) + z;
-h(k) = if (k < 0) then 0 else k;
-g() = 7;
