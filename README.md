@@ -2,7 +2,7 @@
 
 This is a comprehensive implementation of a compiler and interpreter for MiniHaskell, a small subset of Haskell. The MiniHaskell code is compiled into an intermediate representation called _intensional code_, which is then used as the source language for the execution process.
 
-The goal for this project was to design and implement the final assignment for the [Programming Language Principles](https://cgi.di.uoa.gr/~prondo/LANGUAGES/languages.html) course, which is taught by prof. [Panagiotis Rontogiannis](https://cgi.di.uoa.gr/~prondo/) in [DiT](https://www.di.uoa.gr/) (UoA). The [assignment description](https://github.com/GeorgeSittas/minihaskell-compiler/blob/main/project22-23.pdf) is also included (in Greek).
+The goal for this project was to design, implement and grade the final assignment for the [Programming Language Principles](https://cgi.di.uoa.gr/~prondo/LANGUAGES/languages.html) course, which is taught by prof. [Panagiotis Rontogiannis](https://cgi.di.uoa.gr/~prondo/) in [DiT](https://www.di.uoa.gr/) (UoA). The [assignment description](https://github.com/GeorgeSittas/minihaskell-compiler/blob/main/project22-23.pdf) is also included (in Greek).
 
 ### Intensional Code
 
