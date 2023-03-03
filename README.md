@@ -6,7 +6,7 @@ The goal for this project was to design, implement and grade the final assignmen
 
 ### Intensional Code
 
-Intensional code is a dataflow programming language inspired by [Lucid](https://en.wikipedia.org/wiki/Lucid_(programming_language)), and has been described extensively in the [paper](https://www.cambridge.org/core/services/aop-cambridge-core/content/view/CDA5800533BC35832DDC9587E15EFCE0/S0956796897002633a.pdf/firstorder_functional_languages_and_intensional_logic.pdf) "First-order functional languages and intensional logic".
+Intensional code is a dataflow programming language inspired by [Lucid](https://en.wikipedia.org/wiki/Lucid_(programming_language)), and has been described extensively in the [paper](https://www.cambridge.org/core/services/aop-cambridge-core/content/view/CDA5800533BC35832DDC9587E15EFCE0/S0956796897002633a.pdf/firstorder_functional_languages_and_intensional_logic.pdf) "First-order functional languages and intensional logic", by P. Rontogiannis, W. W. Wadge.
 
 ### Usage
 
@@ -39,4 +39,4 @@ As described in the related [articles](https://github.com/GeorgeSittas/minihaske
 
 ### Issues
 
-The [test suite](https://github.com/GeorgeSittas/minihaskell-compiler/tree/main/tests) is certainly not exhaustive, so please condider [creating an issue](https://github.com/GeorgeSittas/minihaskell-compiler/issues/new) if you find a bug.
+The [test suite](https://github.com/GeorgeSittas/minihaskell-compiler/tree/main/tests) is certainly not exhaustive, so please consider [creating an issue](https://github.com/GeorgeSittas/minihaskell-compiler/issues/new) if you find a bug.
